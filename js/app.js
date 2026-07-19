@@ -74,85 +74,123 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = document.getElementById('form-fields');
         container.innerHTML = '';
         
+        let currentTableGroup = null;
+        let tableTbody = null;
+        
         schema.forEach((q, index) => {
-            const safeName = `q_${index}`;
-            const group = document.createElement('div');
-            group.className = 'dyn-group';
-            
-            const label = document.createElement('label');
-            label.className = 'dyn-label';
-            label.textContent = q.label;
-            group.appendChild(label);
-            
-            if (q.type === 'text' || q.type === 'date') {
-                const input = document.createElement('input');
-                input.type = q.type;
-                input.className = 'dyn-input';
-                input.name = q.label; // Use label directly as key for backend mapping
-                input.required = true;
-                group.appendChild(input);
-            } 
-            else if (q.type === 'textarea') {
-                const ta = document.createElement('textarea');
-                ta.className = 'dyn-input';
-                ta.name = q.label;
-                ta.rows = 4;
-                group.appendChild(ta);
-            }
-            else if (q.type === 'dropdown') {
-                const sel = document.createElement('select');
-                sel.className = 'dyn-input';
-                sel.name = q.label;
+            const isYesNo = q.type === 'radio' && q.options && q.options.length === 2 && 
+                            q.options.includes('Yes') && q.options.includes('No');
+                            
+            if (isYesNo) {
+                if (!currentTableGroup) {
+                    currentTableGroup = document.createElement('table');
+                    currentTableGroup.className = 'checklist-table';
+                    currentTableGroup.innerHTML = `
+                        <thead>
+                            <tr>
+                                <th>DESCRIPTION</th>
+                                <th>YES</th>
+                                <th>NO</th>
+                                <th>REMARKS</th>
+                            </tr>
+                        </thead>
+                    `;
+                    tableTbody = document.createElement('tbody');
+                    currentTableGroup.appendChild(tableTbody);
+                    container.appendChild(currentTableGroup);
+                }
                 
-                const def = document.createElement('option');
-                def.value = '';
-                def.textContent = 'Select an option...';
-                def.disabled = true;
-                def.selected = true;
-                sel.appendChild(def);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="desc-col">${q.label}</td>
+                    <td><input type="radio" name="${q.label}" value="Yes" required></td>
+                    <td><input type="radio" name="${q.label}" value="No"></td>
+                    <td class="remarks-col"><input type="text" name="${q.label}_remarks" placeholder="Type here..."></td>
+                `;
+                tableTbody.appendChild(tr);
+            } else {
+                currentTableGroup = null;
+                tableTbody = null;
                 
-                (q.options || []).forEach(opt => {
-                    const o = document.createElement('option');
-                    o.value = opt;
-                    o.textContent = opt;
-                    sel.appendChild(o);
-                });
-                group.appendChild(sel);
-            }
-            else if (q.type === 'radio') {
-                const rg = document.createElement('div');
-                rg.className = 'radio-group';
-                (q.options || []).forEach((opt, i) => {
-                    const rLabel = document.createElement('label');
-                    rLabel.className = 'radio-label';
+                const safeName = `q_${index}`;
+                const group = document.createElement('div');
+                group.className = 'dyn-group';
+                
+                const label = document.createElement('label');
+                label.className = 'dyn-label';
+                label.textContent = q.label;
+                group.appendChild(label);
+                
+                if (q.type === 'text' || q.type === 'date') {
+                    const input = document.createElement('input');
+                    input.type = q.type;
+                    input.className = 'dyn-input';
+                    input.name = q.label; // Use label directly as key for backend mapping
+                    input.required = true;
+                    group.appendChild(input);
+                } 
+                else if (q.type === 'textarea') {
+                    const ta = document.createElement('textarea');
+                    ta.className = 'dyn-input';
+                    ta.name = q.label;
+                    ta.rows = 4;
+                    group.appendChild(ta);
+                }
+                else if (q.type === 'dropdown') {
+                    const sel = document.createElement('select');
+                    sel.className = 'dyn-input';
+                    sel.name = q.label;
                     
-                    const rInput = document.createElement('input');
-                    rInput.type = 'radio';
-                    rInput.name = q.label; // Radio group shares the name
-                    rInput.value = opt;
-                    if(i===0) rInput.required = true; // Make at least one required for validation
+                    const def = document.createElement('option');
+                    def.value = '';
+                    def.textContent = 'Select an option...';
+                    def.disabled = true;
+                    def.selected = true;
+                    sel.appendChild(def);
                     
-                    rLabel.appendChild(rInput);
-                    rLabel.appendChild(document.createTextNode(' ' + opt));
-                    rg.appendChild(rLabel);
-                });
-                group.appendChild(rg);
-            }
-            else if (q.type === 'checkbox') {
-                const cbLabel = document.createElement('label');
-                cbLabel.className = 'radio-label';
+                    (q.options || []).forEach(opt => {
+                        const o = document.createElement('option');
+                        o.value = opt;
+                        o.textContent = opt;
+                        sel.appendChild(o);
+                    });
+                    group.appendChild(sel);
+                }
+                else if (q.type === 'radio') {
+                    const rg = document.createElement('div');
+                    rg.className = 'radio-group';
+                    (q.options || []).forEach((opt, i) => {
+                        const rLabel = document.createElement('label');
+                        rLabel.className = 'radio-label';
+                        
+                        const rInput = document.createElement('input');
+                        rInput.type = 'radio';
+                        rInput.name = q.label; // Radio group shares the name
+                        rInput.value = opt;
+                        if(i===0) rInput.required = true; // Make at least one required for validation
+                        
+                        rLabel.appendChild(rInput);
+                        rLabel.appendChild(document.createTextNode(' ' + opt));
+                        rg.appendChild(rLabel);
+                    });
+                    group.appendChild(rg);
+                }
+                else if (q.type === 'checkbox') {
+                    const cbLabel = document.createElement('label');
+                    cbLabel.className = 'radio-label';
+                    
+                    const cb = document.createElement('input');
+                    cb.type = 'checkbox';
+                    cb.name = q.label;
+                    cb.value = 'Yes'; // If checked, value is Yes, else it will be missing from FormData
+                    
+                    cbLabel.appendChild(cb);
+                    cbLabel.appendChild(document.createTextNode(' Check if applicable'));
+                    group.appendChild(cbLabel);
+                }
                 
-                const cb = document.createElement('input');
-                cb.type = 'checkbox';
-                cb.name = q.label;
-                cb.value = 'Yes'; // If checked, value is Yes, else it will be missing from FormData
-                
-                cbLabel.appendChild(cb);
-                cbLabel.appendChild(document.createTextNode(' Check if applicable'));
-                group.appendChild(cbLabel);
+                container.appendChild(group);
             }
-            
-            container.appendChild(group);
         });
     }
 
@@ -176,7 +214,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Checkboxes only exist in FormData if checked
                 answers[q.label] = formData.has(q.label) ? 'Yes' : 'No';
             } else {
-                answers[q.label] = formData.get(q.label) || '';
+                let val = formData.get(q.label) || '';
+                const isYesNo = q.type === 'radio' && q.options && q.options.length === 2 && 
+                                q.options.includes('Yes') && q.options.includes('No');
+                if (isYesNo) {
+                    const remark = formData.get(q.label + '_remarks');
+                    if (remark && remark.trim() !== '') {
+                        val = val + ' (Remarks: ' + remark.trim() + ')';
+                    }
+                }
+                answers[q.label] = val;
             }
         });
 
