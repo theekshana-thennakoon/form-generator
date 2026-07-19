@@ -1,5 +1,33 @@
 let currentEditTemplateId = null;
 
+window.editTemplate = function(id, name, desc, schemaStr, themeStr) {
+    const schema = typeof schemaStr === 'string' ? JSON.parse(schemaStr.replace(/&quot;/g, '"')) : schemaStr;
+    const theme = typeof themeStr === 'string' ? JSON.parse(themeStr.replace(/&quot;/g, '"')) : themeStr;
+    
+    currentEditTemplateId = id;
+    const listView = document.getElementById('list-view');
+    const builderView = document.getElementById('builder-view');
+    const btnSave = document.getElementById('save-template-btn');
+    const builderTitle = document.querySelector('#builder-view .section-header h3');
+    const questionsContainer = document.getElementById('questions-container');
+
+    builderTitle.textContent = "Edit Form Template";
+    btnSave.textContent = "Update Form Template";
+    document.getElementById('form-title').value = name;
+    document.getElementById('form-description').value = desc;
+    document.getElementById('form-image-url').value = theme.logoUrl || '';
+
+    document.getElementById('theme-primary').value = theme.primary || '#2563eb';
+    document.getElementById('theme-bg').value = theme.bg || '#f8fafc';
+    document.getElementById('theme-card').value = theme.card || '#ffffff';
+
+    questionsContainer.innerHTML = '';
+    schema.forEach(q => window.addQuestionBlock(q.label, q.type, q.options));
+
+    listView.classList.remove('active');
+    builderView.classList.add('active');
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     fetchTemplates();
 
@@ -22,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
         questionsContainer.innerHTML = '';
         document.getElementById('form-title').value = '';
         document.getElementById('form-description').value = '';
+        document.getElementById('form-image-url').value = '';
         document.getElementById('theme-primary').value = '#2563eb';
         document.getElementById('theme-bg').value = '#f8fafc';
         document.getElementById('theme-card').value = '#ffffff';
@@ -45,6 +74,84 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnCancel.addEventListener('click', closeBuilder);
     document.getElementById('back-to-list-btn').addEventListener('click', closeBuilder);
+
+    // Image Upload Logic
+    const uploadBtn = document.getElementById('upload-image-btn');
+    const fileInput = document.getElementById('form-image-upload');
+    const urlInput = document.getElementById('form-image-url');
+
+    if (uploadBtn && fileInput && urlInput) {
+        uploadBtn.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const originalText = uploadBtn.textContent;
+            uploadBtn.textContent = 'Processing...';
+            uploadBtn.disabled = true;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    let currentMaxWidth = 400; // Smaller initial size for logos
+                    let quality = 0.7;
+                    let base64String = '';
+
+                    const compress = () => {
+                        let width = img.width;
+                        let height = img.height;
+                        if (width > currentMaxWidth) {
+                            height = Math.round((height * currentMaxWidth) / width);
+                            width = currentMaxWidth;
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, width, height);
+                        ctx.drawImage(img, 0, 0, width, height);
+                        return canvas.toDataURL('image/jpeg', quality);
+                    };
+
+                    base64String = compress();
+                    
+                    // Force the string to be under 40,000 characters to survive Google Sheets limits
+                    while (base64String.length > 40000 && currentMaxWidth > 100) {
+                        currentMaxWidth -= 100;
+                        quality -= 0.1;
+                        base64String = compress();
+                    }
+
+                    if (base64String.length > 48000) {
+                        Swal.fire('Error', 'Image is too complex to compress sufficiently. Please use a simpler or smaller logo.', 'error');
+                        uploadBtn.textContent = originalText;
+                        uploadBtn.disabled = false;
+                        fileInput.value = '';
+                        return;
+                    }
+
+                    urlInput.value = base64String;
+                    
+                    uploadBtn.textContent = originalText;
+                    uploadBtn.disabled = false;
+                    fileInput.value = '';
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Image Attached',
+                        text: 'Your image has been optimized for storage.',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
 
     // Builder Logic
     btnAddQ.addEventListener('click', () => window.addQuestionBlock());
@@ -133,7 +240,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const theme = {
             primary: document.getElementById('theme-primary').value,
             bg: document.getElementById('theme-bg').value,
-            card: document.getElementById('theme-card').value
+            card: document.getElementById('theme-card').value,
+            logoUrl: document.getElementById('form-image-url').value
         };
         const description = document.getElementById('form-description').value;
 

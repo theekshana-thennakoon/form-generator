@@ -136,6 +136,15 @@
                         <label>Form Description (Optional)</label>
                         <textarea id="form-description" placeholder="e.g. Please complete this inspection before starting your shift." rows="2" style="padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; resize: vertical;"></textarea>
                     </div>
+                    
+                    <div class="input-group" style="margin-bottom: 24px;">
+                        <label>Header Image / Logo URL (Optional)</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="form-image-url" placeholder="https://example.com/logo.png" style="flex: 1; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; box-sizing: border-box; background: var(--secondary);">
+                            <button class="btn btn-secondary" type="button" id="upload-image-btn" style="white-space: nowrap;">Upload from Device</button>
+                            <input type="file" id="form-image-upload" accept="image/*" style="display: none;">
+                        </div>
+                    </div>
 
                     <div class="card" style="margin-bottom: 24px; padding: 16px; background: var(--secondary);">
                         <h4 style="margin-bottom: 12px; margin-top: 0;">Form Design & Theme Presets</h4>

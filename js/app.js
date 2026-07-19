@@ -40,6 +40,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (theme.bg) document.documentElement.style.setProperty('--background', theme.bg);
             if (theme.card) document.documentElement.style.setProperty('--card-bg', theme.card);
             
+            if (theme.logoUrl) {
+                const img = document.getElementById('form-header-image');
+                if (img) {
+                    img.src = theme.logoUrl;
+                    img.style.display = 'block';
+                }
+            }
+            
             // Apply description
             const desc = result.data.description;
             if (desc) {
