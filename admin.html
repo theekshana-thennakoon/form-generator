@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Builder Admin - AutoCheck</title>
+    <!-- Modern Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="css/style.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- HTML2PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        // Clean URL to hide .html (Only works if using a web server, prevents breaking local files)
+        if (window.location.protocol !== 'file:' && window.location.pathname.endsWith('.html')) {
+            const clean = window.location.pathname.replace(/\.html$/, '') + window.location.search + window.location.hash;
+            window.history.replaceState(null, '', clean);
+        }
+    </script>
+    <style>
+        .table-container { overflow-x: auto; margin-top: 16px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 12px; border-bottom: 1px solid var(--border); }
+        th { background-color: var(--secondary); font-weight: 600; }
+        tr:hover { background-color: var(--secondary); }
+        .loader { text-align: center; padding: 40px; color: var(--text-muted); font-weight: 500; }
+        
+        /* Builder Styles */
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .builder-view { display: none; }
+        .builder-view.active { display: block; animation: fadeIn 0.3s ease; }
+        .question-block {
+            background: var(--secondary);
+            border: 1px solid var(--border);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .q-header { display: flex; justify-content: space-between; align-items: center; }
+        .remove-q-btn { background: none; border: none; color: var(--danger); cursor: pointer; font-weight: 600; }
+        .options-container { margin-left: 20px; display: none; }
+        
+        /* Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-overlay.active { display: flex; animation: fadeIn 0.3s ease; }
+        .modal-content { background: var(--card-bg); width: 90%; max-width: 800px; border-radius: 12px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .modal-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--secondary); }
+        .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+        .close-modal { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); }
+        .close-modal:hover { color: var(--text-main); }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>Form Admin</h2>
+            </div>
+            <nav class="main-nav">
+                <a href="#" class="nav-item active" id="nav-templates">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    Manage Templates
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="top-header">
+                <h1>Dynamic Forms</h1>
+                <div class="user-profile">
+                    <div class="avatar">AD</div>
+                    <span>Administrator</span>
+                </div>
+            </header>
+
+            <!-- List View -->
+            <div class="content-body active" id="list-view">
+                <div class="card">
+                    <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h3>Form Templates</h3>
+                            <p class="subtitle">Create and manage custom form templates.</p>
+                        </div>
+                        <button class="btn btn-primary" id="btn-new-template">Create New Form</button>
+                    </div>
+
+                    <div id="loading" class="loader">Loading templates from Google Sheets...</div>
+                    <div id="error-msg" class="status-error" style="display:none; text-align:center; padding:20px;"></div>
+
+                    <div class="table-container" style="display: none;" id="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Form Name</th>
+                                    <th>Submission Sheet</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Builder View -->
+            <div class="content-body builder-view" id="builder-view">
+                <div class="card">
+                    <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h3>Build New Form</h3>
+                            <p class="subtitle">Add custom questions. A new Spreadsheet will be generated automatically for the answers.</p>
+                        </div>
+                        <button class="btn btn-secondary btn-sm" id="back-to-list-btn" style="padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 6px;" title="Back to Templates">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/></svg>
+                            Back
+                        </button>
+                    </div>
+                    
+                    <div class="input-group" style="margin-bottom: 24px;">
+                        <label>Form Title</label>
+                        <input type="text" id="form-title" placeholder="e.g. Daily Forklift Checklist" required>
+                    </div>
+                    
+                    <div class="input-group" style="margin-bottom: 24px;">
+                        <label>Form Description (Optional)</label>
+                        <textarea id="form-description" placeholder="e.g. Please complete this inspection before starting your shift." rows="2" style="padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; resize: vertical;"></textarea>
+                    </div>
+
+                    <div class="card" style="margin-bottom: 24px; padding: 16px; background: var(--secondary);">
+                        <h4 style="margin-bottom: 12px; margin-top: 0;">Form Design & Theme Presets</h4>
+                        
+                        <!-- Theme Presets -->
+                        <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+                            <button class="btn btn-sm preset-btn" data-primary="#2563eb" data-bg="#f8fafc" data-card="#ffffff" style="background: #2563eb; color: white;">Modern Blue</button>
+                            <button class="btn btn-sm preset-btn" data-primary="#8b5cf6" data-bg="#0f172a" data-card="#1e293b" style="background: #8b5cf6; color: white;">Midnight Dark</button>
+                            <button class="btn btn-sm preset-btn" data-primary="#00ff9f" data-bg="#000000" data-card="#111111" style="background: #00ff9f; color: black; font-weight: 700;">Cyberpunk</button>
+                            <button class="btn btn-sm preset-btn" data-primary="#2ea043" data-bg="#f0fdf4" data-card="#ffffff" style="background: #2ea043; color: white;">Forest</button>
+                            <button class="btn btn-sm preset-btn" data-primary="#f97316" data-bg="#fff7ed" data-card="#ffffff" style="background: #f97316; color: white;">Sunset</button>
+                        </div>
+                        
+                        <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                            <div class="input-group" style="flex: 1; min-width: 150px;">
+                                <label>Primary Color</label>
+                                <input type="color" id="theme-primary" value="#2563eb" style="width: 100%; height: 40px; padding: 2px; cursor: pointer;">
+                            </div>
+                            <div class="input-group" style="flex: 1; min-width: 150px;">
+                                <label>Background Color</label>
+                                <input type="color" id="theme-bg" value="#f8fafc" style="width: 100%; height: 40px; padding: 2px; cursor: pointer;">
+                            </div>
+                            <div class="input-group" style="flex: 1; min-width: 150px;">
+                                <label>Card Color</label>
+                                <input type="color" id="theme-card" value="#ffffff" style="width: 100%; height: 40px; padding: 2px; cursor: pointer;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="questions-container">
+                        <!-- Questions added here dynamically -->
+                    </div>
+
+                    <button class="btn btn-secondary" id="add-question-btn" style="margin-bottom: 24px; width: 100%; border: 1px dashed var(--primary); color: var(--primary); background: transparent;">
+                        + Add Question
+                    </button>
+
+                    <div class="form-actions" style="margin-top: 0; flex-direction: row; justify-content: flex-end;">
+                        <button class="btn btn-secondary" id="cancel-builder">Cancel</button>
+                        <button class="btn btn-primary" id="save-template-btn">Save Form Template</button>
+                    </div>
+                    <div id="builder-status" style="text-align: right; margin-top: 8px;"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Submissions Modal -->
+    <div class="modal-overlay" id="submissions-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h3 id="modal-form-title" style="margin: 0 0 4px 0;">Form Submissions</h3>
+                    <p class="subtitle" id="modal-form-id" style="margin: 0; font-size: 13px;"></p>
+                </div>
+                <button class="close-modal" id="close-modal-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="modal-loader" class="loader">Fetching submissions...</div>
+                <div id="modal-error" class="status-error" style="display:none; text-align:center;"></div>
+                
+                <div class="table-container" id="modal-table-container" style="display: none; margin-top: 0;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Submission ID</th>
+                                <th style="text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modal-table-body">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden div for PDF generation -->
+    <div id="pdf-container" style="display: none; padding: 40px; background: white; color: black; font-family: 'Inter', sans-serif;"></div>
+
+    <!-- Need google.js just for the GOOGLE_APP_SCRIPT_URL constant -->
+    <script src="js/google.js"></script>
+    <script src="js/builder.js"></script>
+</body>
+</html>
