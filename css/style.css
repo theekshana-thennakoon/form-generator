@@ -203,6 +203,20 @@ body {
     margin-top: 4px;
 }
 
+/* Loaders */
+.loader {
+    text-align: center;
+    padding: 40px;
+    font-size: 16px;
+    font-weight: 600;
+    background: linear-gradient(90deg, #ff007f, #007fff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
 /* Grids */
 .grid-2-col {
     display: grid;
