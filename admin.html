@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Form Builder Admin - AutoCheck</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <!-- Modern Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,11 +23,12 @@
         }
     </script>
     <style>
-        .table-container { overflow-x: auto; margin-top: 16px; }
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th, td { padding: 12px; border-bottom: 1px solid var(--border); }
-        th { background-color: var(--secondary); font-weight: 600; }
-        tr:hover { background-color: var(--secondary); }
+        .table-container { overflow-x: auto; margin-top: 16px; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+        table { width: 100%; border-collapse: collapse; text-align: left; background: var(--card-bg); }
+        th, td { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+        th { background-color: #f9fafb; font-weight: 600; color: var(--text-muted); text-transform: uppercase; font-size: 12px; letter-spacing: 0.05em; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background-color: var(--secondary); transition: var(--transition); }
         .loader { text-align: center; padding: 40px; color: var(--text-muted); font-weight: 500; }
         
         /* Builder Styles */
@@ -34,27 +36,31 @@
         .builder-view { display: none; }
         .builder-view.active { display: block; animation: fadeIn 0.3s ease; }
         .question-block {
-            background: var(--secondary);
+            background: var(--card-bg);
             border: 1px solid var(--border);
-            padding: 16px;
-            border-radius: 8px;
+            padding: 24px;
+            border-radius: var(--border-radius);
             margin-bottom: 16px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 16px;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
         }
+        .question-block:hover { box-shadow: var(--shadow-md); border-color: rgba(79, 70, 229, 0.3); }
         .q-header { display: flex; justify-content: space-between; align-items: center; }
-        .remove-q-btn { background: none; border: none; color: var(--danger); cursor: pointer; font-weight: 600; }
+        .remove-q-btn { background: none; border: none; color: var(--danger); cursor: pointer; font-weight: 600; padding: 8px; border-radius: 8px; transition: var(--transition); }
+        .remove-q-btn:hover { background: #fee2e2; }
         .options-container { margin-left: 20px; display: none; }
         
         /* Modal Styles */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-overlay.active { display: flex; animation: fadeIn 0.3s ease; }
-        .modal-content { background: var(--card-bg); width: 90%; max-width: 800px; border-radius: 12px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .modal-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--secondary); }
-        .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
-        .close-modal { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); }
-        .close-modal:hover { color: var(--text-main); }
+        .modal-content { background: var(--card-bg); width: 90%; max-width: 900px; border-radius: var(--border-radius); max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .modal-header { padding: 24px 32px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); }
+        .modal-body { padding: 32px; overflow-y: auto; flex: 1; background: var(--bg-main); }
+        .close-modal { background: var(--secondary); border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 24px; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; transition: var(--transition); }
+        .close-modal:hover { background: #e5e7eb; color: var(--text-main); transform: rotate(90deg); }
     </style>
 </head>
 <body>
