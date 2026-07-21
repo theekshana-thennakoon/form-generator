@@ -17,7 +17,7 @@ window.editTemplate = function(id, name, desc, schemaStr, themeStr) {
     document.getElementById('form-description').value = desc;
     document.getElementById('form-image-url').value = theme.logoUrl || '';
 
-    document.getElementById('theme-primary').value = theme.primary || '#2563eb';
+    document.getElementById('theme-primary').value = theme.primary || '#ef4444';
     document.getElementById('theme-bg').value = theme.bg || '#f8fafc';
     document.getElementById('theme-card').value = theme.card || '#ffffff';
 
@@ -40,6 +40,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const questionsContainer = document.getElementById('questions-container');
     const builderTitle = document.querySelector('#builder-view .section-header h3');
 
+    // Initialize Sortable for drag-and-drop
+    if (typeof Sortable !== 'undefined') {
+        new Sortable(questionsContainer, {
+            animation: 150,
+            handle: '.drag-handle', // use the drag handle class
+            ghostClass: 'sortable-ghost'
+        });
+    }
+
     // UI Navigation
     btnNew.addEventListener('click', () => {
         currentEditTemplateId = null;
@@ -51,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('form-title').value = '';
         document.getElementById('form-description').value = '';
         document.getElementById('form-image-url').value = '';
-        document.getElementById('theme-primary').value = '#2563eb';
+        document.getElementById('theme-primary').value = '#ef4444';
         document.getElementById('theme-bg').value = '#f8fafc';
         document.getElementById('theme-card').value = '#ffffff';
         window.addQuestionBlock(); // Add one default block
@@ -162,7 +171,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         div.innerHTML = `
             <div class="q-header">
-                <strong>Question</strong>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="drag-handle" style="cursor: move; font-size: 18px; color: #9ca3af; padding: 0 4px; user-select: none;" title="Drag to reorder">☰</span>
+                    <strong>Question</strong>
+                </div>
                 <button type="button" class="remove-q-btn">X Remove</button>
             </div>
             <div class="input-group">
@@ -393,7 +405,7 @@ window.editTemplate = function(id, name, descStr, schemaStr, themeStr) {
     let theme = {};
     try { theme = JSON.parse(themeStrSafe); } catch(e){}
     
-    document.getElementById('theme-primary').value = theme.primary || '#2563eb';
+    document.getElementById('theme-primary').value = theme.primary || '#ef4444';
     document.getElementById('theme-bg').value = theme.bg || '#f8fafc';
     document.getElementById('theme-card').value = theme.card || '#ffffff';
     
@@ -533,14 +545,15 @@ window.downloadPdf = function(rowIndex) {
     
     let htmlContent = `
         <style>
-            .pdf-wrapper { font-family: 'Inter', sans-serif; color: #1f2937; margin: 0; padding: 0; background: #fff; }
-            .pdf-header { background: linear-gradient(135deg, #2563eb, #1e40af); color: white; padding: 40px; border-radius: 8px 8px 0 0; }
+            .pdf-wrapper { font-family: 'Inter', 'Noto Sans Sinhala', sans-serif; color: #1f2937; margin: 0; padding: 0; background: #fff; position: relative; }
+
+            .pdf-header { background: linear-gradient(135deg, #ef4444, #b91c1c); color: white; padding: 40px; border-radius: 8px 8px 0 0; }
             .pdf-header h1 { margin: 0 0 10px 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
             .pdf-meta { display: flex; justify-content: space-between; font-size: 14px; opacity: 0.9; }
             .pdf-body { padding: 40px; background: #f9fafb; border-radius: 0 0 8px 8px;}
             .pdf-card { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #e5e7eb; }
             .pdf-table { width: 100%; border-collapse: collapse; font-size: 15px; }
-            .pdf-table td { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; vertical-align: top; }
+            .pdf-table td { padding: 10px 16px; border-bottom: 1px solid #f3f4f6; vertical-align: top; }
             .pdf-table tr:nth-child(even) { background-color: #fdfdfd; }
             .pdf-table tr:last-child td { border-bottom: none; }
             .pdf-q { font-weight: 600; color: #374151; width: 45%; }

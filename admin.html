@@ -8,13 +8,15 @@
     <!-- Modern Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Sinhala:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Main Stylesheet -->
-    <link rel="stylesheet" href="css/style.css?v=1.1">
+    <link rel="stylesheet" href="css/style.css?v=1.4">
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- HTML2PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- SortableJS -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script>
         // Clean URL to hide .html (Only works if using a web server, prevents breaking local files)
         if (window.location.protocol !== 'file:' && window.location.pathname.endsWith('.html')) {
@@ -23,9 +25,9 @@
         }
     </script>
     <style>
-        .table-container { overflow-x: auto; margin-top: 16px; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+        .table-container { overflow-x: auto; margin-top: 16px; border-radius: 12px; border: 1px solid var(--primary); box-shadow: var(--shadow-sm); }
         table { width: 100%; border-collapse: collapse; text-align: left; background: var(--card-bg); }
-        th, td { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+        th, td { padding: 16px 20px; border-bottom: 1px solid var(--primary); }
         th { background-color: #f9fafb; font-weight: 600; color: var(--text-muted); text-transform: uppercase; font-size: 12px; letter-spacing: 0.05em; }
         tr:last-child td { border-bottom: none; }
         tr:hover td { background-color: var(--secondary); transition: var(--transition); }
@@ -37,17 +39,17 @@
         .builder-view.active { display: block; animation: fadeIn 0.3s ease; }
         .question-block {
             background: var(--card-bg);
-            border: 1px solid var(--border);
+            border: 1px solid var(--primary);
             padding: 24px;
             border-radius: var(--border-radius);
-            margin-bottom: 16px;
+            margin-bottom: 8px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 8px;
             box-shadow: var(--shadow-sm);
             transition: var(--transition);
         }
-        .question-block:hover { box-shadow: var(--shadow-md); border-color: rgba(79, 70, 229, 0.3); }
+        .question-block:hover { box-shadow: var(--shadow-md); border-color: rgba(239, 68, 68, 0.3); }
         .q-header { display: flex; justify-content: space-between; align-items: center; }
         .remove-q-btn { background: none; border: none; color: var(--danger); cursor: pointer; font-weight: 600; padding: 8px; border-radius: 8px; transition: var(--transition); }
         .remove-q-btn:hover { background: #fee2e2; }
@@ -57,7 +59,7 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-overlay.active { display: flex; animation: fadeIn 0.3s ease; }
         .modal-content { background: var(--card-bg); width: 90%; max-width: 900px; border-radius: var(--border-radius); max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .modal-header { padding: 24px 32px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); }
+        .modal-header { padding: 24px 32px; border-bottom: 1px solid var(--primary); display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); }
         .modal-body { padding: 32px; overflow-y: auto; flex: 1; background: var(--bg-main); }
         .close-modal { background: var(--secondary); border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 24px; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; transition: var(--transition); }
         .close-modal:hover { background: #e5e7eb; color: var(--text-main); transform: rotate(90deg); }
@@ -140,13 +142,13 @@
                     
                     <div class="input-group" style="margin-bottom: 24px;">
                         <label>Form Description (Optional)</label>
-                        <textarea id="form-description" placeholder="e.g. Please complete this inspection before starting your shift." rows="2" style="padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; resize: vertical;"></textarea>
+                        <textarea id="form-description" placeholder="e.g. Please complete this inspection before starting your shift." rows="2" style="padding: 10px 14px; border: 1px solid var(--primary); border-radius: 8px; font-family: inherit; resize: vertical;"></textarea>
                     </div>
                     
                     <div class="input-group" style="margin-bottom: 24px;">
                         <label>Header Image / Logo URL (Optional)</label>
                         <div style="display: flex; gap: 8px;">
-                            <input type="text" id="form-image-url" placeholder="https://example.com/logo.png" style="flex: 1; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; box-sizing: border-box; background: var(--secondary);">
+                            <input type="text" id="form-image-url" placeholder="https://example.com/logo.png" style="flex: 1; padding: 10px 14px; border: 1px solid var(--primary); border-radius: 8px; font-family: inherit; box-sizing: border-box; background: var(--secondary);">
                             <button class="btn btn-secondary" type="button" id="upload-image-btn" style="white-space: nowrap;">Upload from Device</button>
                             <input type="file" id="form-image-upload" accept="image/*" style="display: none;">
                         </div>
@@ -157,7 +159,7 @@
                         
                         <!-- Theme Presets -->
                         <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
-                            <button class="btn btn-sm preset-btn" data-primary="#2563eb" data-bg="#f8fafc" data-card="#ffffff" style="background: #2563eb; color: white;">Modern Blue</button>
+                            <button class="btn btn-sm preset-btn" data-primary="#ef4444" data-bg="#f8fafc" data-card="#ffffff" style="background: #ef4444; color: white;">Modern Red</button>
                             <button class="btn btn-sm preset-btn" data-primary="#8b5cf6" data-bg="#0f172a" data-card="#1e293b" style="background: #8b5cf6; color: white;">Midnight Dark</button>
                             <button class="btn btn-sm preset-btn" data-primary="#00ff9f" data-bg="#000000" data-card="#111111" style="background: #00ff9f; color: black; font-weight: 700;">Cyberpunk</button>
                             <button class="btn btn-sm preset-btn" data-primary="#2ea043" data-bg="#f0fdf4" data-card="#ffffff" style="background: #2ea043; color: white;">Forest</button>
@@ -167,7 +169,7 @@
                         <div style="display: flex; gap: 16px; flex-wrap: wrap;">
                             <div class="input-group" style="flex: 1; min-width: 150px;">
                                 <label>Primary Color</label>
-                                <input type="color" id="theme-primary" value="#2563eb" style="width: 100%; height: 40px; padding: 2px; cursor: pointer;">
+                                <input type="color" id="theme-primary" value="#ef4444" style="width: 100%; height: 40px; padding: 2px; cursor: pointer;">
                             </div>
                             <div class="input-group" style="flex: 1; min-width: 150px;">
                                 <label>Background Color</label>
@@ -231,10 +233,10 @@
     </div>
 
     <!-- Hidden div for PDF generation -->
-    <div id="pdf-container" style="display: none; padding: 40px; background: white; color: black; font-family: 'Inter', sans-serif;"></div>
+    <div id="pdf-container" style="display: none; padding: 40px; background: white; color: black; font-family: 'Inter', 'Noto Sans Sinhala', sans-serif;"></div>
 
     <!-- Need google.js just for the GOOGLE_APP_SCRIPT_URL constant -->
-    <script src="js/google.js?v=1.1"></script>
-    <script src="js/builder.js?v=1.1"></script>
+    <script src="js/google.js?v=1.4"></script>
+    <script src="js/builder.js?v=1.4"></script>
 </body>
 </html>

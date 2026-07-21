@@ -76,22 +76,33 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let currentTableGroup = null;
         let tableTbody = null;
+        let currentRadioOptions = null;
         
         schema.forEach((q, index) => {
-            const isYesNo = q.type === 'radio' && q.options && q.options.length === 2 && 
-                            q.options.includes('Yes') && q.options.includes('No');
+            const isRadioTable = q.type === 'radio';
+            
+            let optionsMatch = false;
+            if (isRadioTable && currentTableGroup && currentRadioOptions) {
+                optionsMatch = JSON.stringify(q.options || []) === JSON.stringify(currentRadioOptions);
+            }
                             
-            if (isYesNo) {
-                if (!currentTableGroup) {
+            if (isRadioTable) {
+                if (!currentTableGroup || !optionsMatch) {
                     currentTableGroup = document.createElement('table');
                     currentTableGroup.className = 'checklist-table';
+                    currentRadioOptions = q.options || [];
+                    
+                    let headersHtml = '';
+                    currentRadioOptions.forEach(opt => {
+                        headersHtml += `<th>${opt.toUpperCase()}</th>`;
+                    });
+
                     currentTableGroup.innerHTML = `
                         <thead>
                             <tr>
+                                <th>#</th>
                                 <th>DESCRIPTION</th>
-                                <th>YES</th>
-                                <th>NO</th>
-                                <th>REMARKS</th>
+                                ${headersHtml}
                             </tr>
                         </thead>
                     `;
@@ -100,12 +111,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     container.appendChild(currentTableGroup);
                 }
                 
+                let tdsHtml = '';
+                currentRadioOptions.forEach((opt, i) => {
+                    tdsHtml += `<td><input type="radio" name="${q.label}" value="${opt}" ${i === 0 ? 'required' : ''}></td>`;
+                });
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
+                    <td class="num-col"></td>
                     <td class="desc-col">${q.label}</td>
-                    <td><input type="radio" name="${q.label}" value="Yes" required></td>
-                    <td><input type="radio" name="${q.label}" value="No"></td>
-                    <td class="remarks-col"><input type="text" name="${q.label}_remarks" placeholder="Type here..."></td>
+                    ${tdsHtml}
                 `;
                 tableTbody.appendChild(tr);
             } else {
@@ -156,25 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     group.appendChild(sel);
                 }
-                else if (q.type === 'radio') {
-                    const rg = document.createElement('div');
-                    rg.className = 'radio-group';
-                    (q.options || []).forEach((opt, i) => {
-                        const rLabel = document.createElement('label');
-                        rLabel.className = 'radio-label';
-                        
-                        const rInput = document.createElement('input');
-                        rInput.type = 'radio';
-                        rInput.name = q.label; // Radio group shares the name
-                        rInput.value = opt;
-                        if(i===0) rInput.required = true; // Make at least one required for validation
-                        
-                        rLabel.appendChild(rInput);
-                        rLabel.appendChild(document.createTextNode(' ' + opt));
-                        rg.appendChild(rLabel);
-                    });
-                    group.appendChild(rg);
-                }
+
                 else if (q.type === 'checkbox') {
                     const cbLabel = document.createElement('label');
                     cbLabel.className = 'radio-label';
@@ -217,12 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let val = formData.get(q.label) || '';
                 const isYesNo = q.type === 'radio' && q.options && q.options.length === 2 && 
                                 q.options.includes('Yes') && q.options.includes('No');
-                if (isYesNo) {
-                    const remark = formData.get(q.label + '_remarks');
-                    if (remark && remark.trim() !== '') {
-                        val = val + ' (Remarks: ' + remark.trim() + ')';
-                    }
-                }
+                // Removed remarks fetching logic
                 answers[q.label] = val;
             }
         });
