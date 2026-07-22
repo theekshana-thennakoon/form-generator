@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Builder Logic
     btnAddQ.addEventListener('click', () => window.addQuestionBlock());
 
-    window.addQuestionBlock = function(label = '', type = 'text', options = []) {
+    window.addQuestionBlock = function(label = '', type = 'text', options = [], required = true) {
         const div = document.createElement('div');
         div.className = 'question-block';
         
@@ -179,7 +179,12 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="input-group">
                 <label>Question Label</label>
-                <input type="text" class="q-label" placeholder="e.g. Engine Oil Level" value="${label}" required>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <input type="text" class="q-label" placeholder="e.g. Engine Oil Level" value="${label}" required style="flex:1;">
+                    <label style="display:flex; align-items:center; gap:4px; margin:0; white-space:nowrap; font-weight:normal; cursor:pointer;">
+                        <input type="checkbox" class="q-required" ${required ? 'checked' : ''} style="margin:0; width:auto; height:auto;"> Required
+                    </label>
+                </div>
             </div>
             <div class="input-group">
                 <label>Question Type</label>
@@ -187,27 +192,117 @@ document.addEventListener('DOMContentLoaded', () => {
                     <option value="text" ${type==='text'?'selected':''}>Short Text</option>
                     <option value="textarea" ${type==='textarea'?'selected':''}>Long Text (Paragraph)</option>
                     <option value="dropdown" ${type==='dropdown'?'selected':''}>Dropdown Select</option>
-                    <option value="radio" ${type==='radio'?'selected':''}>Radio Buttons</option>
+                    <option value="radio" ${type==='radio'?'selected':''}>Radio Buttons (Checklist)</option>
+                    <option value="radiocards" ${type==='radiocards'?'selected':''}>Radio Buttons (Cards)</option>
                     <option value="checkbox" ${type==='checkbox'?'selected':''}>Checkbox (True/False)</option>
                     <option value="date" ${type==='date'?'selected':''}>Date Picker</option>
+                    <option value="step" ${type==='step'?'selected':''}>Step Break (New Tab)</option>
+                    <option value="info" ${type==='info'?'selected':''}>Information Block</option>
+                    <option value="signature" ${type==='signature'?'selected':''}>Signature Pad</option>
+                    <option value="selfie" ${type==='selfie'?'selected':''}>Selfie Capture</option>
                 </select>
             </div>
-            <div class="input-group options-container" style="${(type==='dropdown'||type==='radio')?'display:flex':'display:none'}">
+            <div class="input-group options-container" style="${(type==='dropdown'||type==='radio'||type==='radiocards')?'display:flex':'display:none'}">
                 <label>Options (comma separated)</label>
                 <input type="text" class="q-options" placeholder="e.g. Good, Low, Replace" value="${options.join(', ')}">
+            </div>
+            <div class="input-group info-color-container" style="${(type==='info')?'display:flex':'display:none'}">
+                <label>Alert Color (for Info Blocks)</label>
+                <select class="q-info-color">
+                    <option value="yellow" ${options[0]==='yellow'?'selected':''}>Yellow (Warning/Rules)</option>
+                    <option value="red" ${options[0]==='red'?'selected':''}>Red (Legal/Danger)</option>
+                    <option value="green" ${options[0]==='green'?'selected':''}>Green (Success/Accepted)</option>
+                </select>
+            </div>
+            <div class="input-group info-content-container" style="${(type==='info')?'display:flex':'display:none'}">
+                <label>Information Text (Use Enter for new lines)</label>
+                <textarea class="q-info-content" rows="4">${options[1] || ''}</textarea>
+            </div>
+            <div class="input-group info-accept-container" style="${(type==='info')?'display:flex; flex-direction:row; align-items:center; gap:8px; margin-top:8px;':'display:none'}">
+                <input type="checkbox" class="q-info-accept" style="width:16px; height:16px;" ${options[2]==='true'?'checked':''}>
+                <label style="margin:0;">Include "Accept and confirm" Checkbox</label>
+            </div>
+            <div class="input-group info-btn-container" style="${(type==='info')?'display:flex; flex-direction:column; margin-top:8px; gap:4px;':'display:none'}">
+                <label style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>Action Buttons (Optional)</span>
+                    <button type="button" class="btn btn-secondary btn-sm add-info-btn" style="padding:2px 8px; font-size:12px;">+ Add Button</button>
+                </label>
+                <div class="info-btns-list" style="display:flex; flex-direction:column; gap:8px;">
+                </div>
             </div>
         `;
 
         // Handle type change to show options input
         const typeSelect = div.querySelector('.q-type');
         const optionsContainer = div.querySelector('.options-container');
+        const infoColorContainer = div.querySelector('.info-color-container');
+        const infoContentContainer = div.querySelector('.info-content-container');
+        const infoAcceptContainer = div.querySelector('.info-accept-container');
+        const infoBtnContainer = div.querySelector('.info-btn-container');
+        const infoBtnsList = div.querySelector('.info-btns-list');
+        const addInfoBtn = div.querySelector('.add-info-btn');
+        
+        const renderInfoBtnRow = (text = '', url = '') => {
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex; gap:8px; align-items:center;';
+            row.innerHTML = `
+                <input type="text" class="q-info-btn-text" placeholder="Button Text (e.g. View Doc)" value="${text}" style="flex:1;">
+                <input type="url" class="q-info-btn-url" placeholder="URL (e.g. https://...)" value="${url}" style="flex:2;">
+                <button type="button" class="btn btn-secondary btn-sm remove-info-btn" style="padding:4px 8px; color:var(--danger); border-color:var(--danger); background:transparent;">X</button>
+            `;
+            row.querySelector('.remove-info-btn').addEventListener('click', () => row.remove());
+            infoBtnsList.appendChild(row);
+        };
+
+        if (type === 'info') {
+            for (let i = 3; i < options.length; i += 2) {
+                if (options[i] || options[i+1]) {
+                    renderInfoBtnRow(options[i], options[i+1]);
+                }
+            }
+        }
+        addInfoBtn.addEventListener('click', () => renderInfoBtnRow());
+        
         typeSelect.addEventListener('change', (e) => {
-            if (e.target.value === 'dropdown' || e.target.value === 'radio') {
+            if (e.target.value === 'dropdown' || e.target.value === 'radio' || e.target.value === 'radiocards') {
                 optionsContainer.style.display = 'flex';
             } else {
                 optionsContainer.style.display = 'none';
             }
+            if (e.target.value === 'info') {
+                infoColorContainer.style.display = 'flex';
+                infoContentContainer.style.display = 'flex';
+                infoAcceptContainer.style.display = 'flex';
+                infoBtnContainer.style.display = 'flex';
+                
+                // Initialize EasyMDE if not already initialized
+                const textarea = div.querySelector('.q-info-content');
+                if (!textarea.mde) {
+                    textarea.mde = new EasyMDE({ 
+                        element: textarea,
+                        status: false,
+                        spellChecker: false,
+                        minHeight: "100px"
+                    });
+                }
+            } else {
+                infoColorContainer.style.display = 'none';
+                infoContentContainer.style.display = 'none';
+                infoAcceptContainer.style.display = 'none';
+                infoBtnContainer.style.display = 'none';
+            }
         });
+        
+        // Initialize MDE immediately if type is info (for editing)
+        if (type === 'info') {
+            const textarea = div.querySelector('.q-info-content');
+            textarea.mde = new EasyMDE({ 
+                element: textarea,
+                status: false,
+                spellChecker: false,
+                minHeight: "100px"
+            });
+        }
 
         // Remove button
         div.querySelector('.remove-q-btn').addEventListener('click', () => div.remove());
@@ -233,12 +328,28 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const type = block.querySelector('.q-type').value;
             let options = [];
-            if(type === 'dropdown' || type === 'radio') {
+            if(type === 'dropdown' || type === 'radio' || type === 'radiocards') {
                 const optString = block.querySelector('.q-options').value;
                 options = optString.split(',').map(s => s.trim()).filter(s => s);
+            } else if(type === 'info') {
+                const infoColor = block.querySelector('.q-info-color').value;
+                const contentEl = block.querySelector('.q-info-content');
+                const infoContent = contentEl.mde ? contentEl.mde.value() : contentEl.value;
+                const infoAccept = block.querySelector('.q-info-accept').checked ? 'true' : 'false';
+                options = [infoColor, infoContent, infoAccept];
+                
+                const btnRows = block.querySelectorAll('.info-btns-list > div');
+                btnRows.forEach(row => {
+                    const t = row.querySelector('.q-info-btn-text').value.trim();
+                    const u = row.querySelector('.q-info-btn-url').value.trim();
+                    if (t || u) {
+                        options.push(t, u);
+                    }
+                });
             }
             
-            schema.push({ label, type, options });
+            const required = block.querySelector('.q-required').checked;
+            schema.push({ label, type, options, required });
         });
 
         if (!valid || schema.length === 0) {
@@ -334,8 +445,6 @@ async function fetchTemplates() {
             tableBody.innerHTML = '';
             data.forEach(row => {
                 const tr = document.createElement('tr');
-                const schemaSafe = (typeof row.schema === 'string' ? row.schema : JSON.stringify(row.schema)).replace(/'/g, "\\'").replace(/"/g, '&quot;');
-                const themeSafe = (typeof row.theme === 'string' ? row.theme : JSON.stringify(row.theme || {})).replace(/'/g, "\\'").replace(/"/g, '&quot;');
                 
                 tr.innerHTML = `
                     <td><strong>${row.formName}</strong><br><small style="color:var(--text-muted)">${row.id}</small></td>
@@ -345,20 +454,32 @@ async function fetchTemplates() {
                         </a>
                     </td>
                     <td class="action-btns" style="display:flex; gap:8px;">
-                        <button class="btn btn-secondary btn-sm" onclick="window.viewSubmissions('${row.id}')" title="View Submissions">
+                        <button class="btn btn-secondary btn-sm btn-view-subs" title="View Submissions">
                             <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/></svg>
                         </button>
-                        <button class="btn btn-primary btn-sm" onclick="window.open('index.html?formId=${row.id}', '_blank')" title="Fill Out Form">
+                        <button class="btn btn-primary btn-sm btn-fill-form" title="Fill Out Form">
                             <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/><path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/></svg>
                         </button>
-                        <button class="btn btn-secondary btn-sm" onclick="window.editTemplate('${row.id}', '${row.formName.replace(/'/g, "\\'")}', '${(row.description||'').replace(/'/g, "\\'")}', '${schemaSafe}', '${themeSafe}')" title="Edit Template">
+                        <button class="btn btn-secondary btn-sm btn-edit-form" title="Edit Template">
                             <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/></svg>
                         </button>
-                        <button class="btn btn-primary btn-sm" style="background-color: var(--danger)" onclick="window.deleteTemplate('${row.id}', this)" title="Delete Template">
+                        <button class="btn btn-primary btn-sm btn-delete-form" style="background-color: var(--danger)" title="Delete Template">
                             <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
                         </button>
                     </td>
                 `;
+                
+                tr.querySelector('.btn-view-subs').addEventListener('click', () => window.viewSubmissions(row.id));
+                tr.querySelector('.btn-fill-form').addEventListener('click', () => window.open(`index.html?formId=${row.id}`, '_blank'));
+                tr.querySelector('.btn-edit-form').addEventListener('click', () => {
+                    const schemaStr = typeof row.schema === 'string' ? row.schema : JSON.stringify(row.schema);
+                    const themeStr = typeof row.theme === 'string' ? row.theme : JSON.stringify(row.theme || {});
+                    window.editTemplate(row.id, row.formName, row.description || '', schemaStr, themeStr);
+                });
+                tr.querySelector('.btn-delete-form').addEventListener('click', function() {
+                    window.deleteTemplate(row.id, this);
+                });
+                
                 tableBody.appendChild(tr);
             });
 
@@ -378,8 +499,12 @@ window.editTemplate = function(id, name, descStr, schemaStr, themeStr) {
     currentEditTemplateId = id;
     
     // Decode schema
-    const unescaped = schemaStr.replace(/&quot;/g, '"');
-    const schema = JSON.parse(unescaped);
+    let schema = [];
+    try {
+        schema = JSON.parse(schemaStr);
+    } catch(e) {
+        console.error("Failed to parse schema:", e);
+    }
     
     // Setup UI
     const listView = document.getElementById('list-view');
@@ -397,20 +522,18 @@ window.editTemplate = function(id, name, descStr, schemaStr, themeStr) {
     btnSave.textContent = "Update Form Template";
     
     schema.forEach(q => {
-        window.addQuestionBlock(q.label, q.type, q.options || []);
+        window.addQuestionBlock(q.label, q.type, q.options || [], q.required !== false);
     });
 
     // Decode theme
-    const themeStrSafe = themeStr ? themeStr.replace(/&quot;/g, '"') : '{}';
     let theme = {};
-    try { theme = JSON.parse(themeStrSafe); } catch(e){}
+    try { theme = JSON.parse(themeStr); } catch(e){}
     
     document.getElementById('theme-primary').value = theme.primary || '#ef4444';
     document.getElementById('theme-bg').value = theme.bg || '#f8fafc';
     document.getElementById('theme-card').value = theme.card || '#ffffff';
     
-    const descUnescaped = descStr ? descStr.replace(/&quot;/g, '"') : '';
-    document.getElementById('form-description').value = descUnescaped;
+    document.getElementById('form-description').value = descStr || '';
 };
 
 window.deleteTemplate = async function(id, btnElement) {

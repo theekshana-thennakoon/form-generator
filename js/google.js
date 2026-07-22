@@ -1,5 +1,5 @@
 // TODO: User must replace this URL with their deployed Google Apps Script Web App URL
-const GOOGLE_APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxg7ZQVIJtEq5TVhwfljbbFpNiHxrGJFQSZjJmd5ygZziEHYvo0LvzJc1YHMx7BESu-/exec';
+const GOOGLE_APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx1dpYoa7lx1UzINV1pyaqCNARMFj44KjgXn85DL_xBlQjyXQ7UM1REDVHtWG1OjiVJ/exec';
 
 let currentEditId = null;
 

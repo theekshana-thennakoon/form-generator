@@ -244,7 +244,33 @@ function doPost(e) {
           rowToAppend.push(subId);
         } else {
           // Find answer for this header
-          rowToAppend.push(answers[header] !== undefined ? answers[header] : '');
+          let val = answers[header] !== undefined ? answers[header] : '';
+          
+          // If the answer is a base64 image (from selfie or signature)
+          if (typeof val === 'string' && val.startsWith('data:image/')) {
+            try {
+              const split = val.split(',');
+              const mimeMatch = split[0].match(/:(.*?);/);
+              const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
+              const base64Data = split[1];
+              
+              // Create an image file in Google Drive
+              const blob = Utilities.newBlob(Utilities.base64Decode(base64Data), mimeType, header + '_' + subId);
+              const file = DriveApp.createFile(blob);
+              
+              // Make it viewable so the Spreadsheet can render it
+              file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+              
+              // Construct the direct image URL and use the IMAGE formula
+              const fileId = file.getId();
+              const imageUrl = 'https://drive.google.com/uc?export=view&id=' + fileId;
+              val = `=IMAGE("${imageUrl}")`;
+            } catch(e) {
+              // Fallback to text if saving fails
+            }
+          }
+          
+          rowToAppend.push(val);
         }
       });
       
