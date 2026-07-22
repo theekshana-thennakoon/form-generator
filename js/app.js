@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             const btnText = q.options[i];
                             const btnUrl = q.options[i+1];
                             if (btnText || btnUrl) {
-                                btnHtml += `<a href="${btnUrl || '#'}" target="_blank" class="btn btn-secondary btn-sm" style="text-decoration:none;">${btnText || 'Link'}</a>`;
+                                btnHtml += `<a href="${btnUrl || '#'}" target="_blank" class="btn info-action-btn btn-sm" style="text-decoration:none;">${btnText || 'Link'}</a>`;
                             }
                         }
                         btnHtml += '</div>';
